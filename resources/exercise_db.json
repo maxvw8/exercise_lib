@@ -1,0 +1,25 @@
+[{
+    "id":1,
+    "name":     "push up",
+    "type":     "anaerobic",
+    "category": ["arm","chest"],
+    "muscles":  [{"id":1,"name":"muscle1","front":false}],
+    "muscle_groups": ["chest","triceps"],
+    "images":   ["https://3vnqw32fta3x1ysij926ljs3-wpengine.netdna-ssl.com/wp-content/uploads/2018/02/The-Pushup.jpg"],
+    "videos":   ["https://www.youtube.com/watch?v=dQw4w9WgXcQ"],
+    "variation":[],
+    "equipment":[] 
+},
+{
+    "id":2,
+    "name":     "sit up",
+    "type":     "aerobic",
+    "category": ["core","abs"],
+    "muscles":  [{"id":2,"name":"muscle2","front":false},
+                 {"id":3,"name":"muscle3","front":false}],
+    "muscle_groups": ["core","abdominal"],
+    "images":   ["https://hips.hearstapps.com/hmg-prod.s3.amazonaws.com/images/bootcamp-situp-1441032989.jpg"],
+    "videos":   ["https://www.youtube.com/watch?v=dQw4w9WgXcQ"],
+    "variation":[],
+    "equipment":[]
+}]

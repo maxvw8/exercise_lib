@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package pbexrs;
+option go_package = "pbexrs/v1";
+import "third_party/google/api/annotations.proto"; 
+import "third_party/google/protobuf/empty.proto"; 
+
+message Exercise{
+    string id = 1;
+    string name = 2;
+    string kind = 3;
+    repeated string categories = 4;
+    repeated string muscles = 5;
+    repeated string muscle_groups = 6;
+    repeated string images = 7;
+    repeated string videos = 8;
+}
+service ExerciseService {
+    rpc GetExercise(GetExerciseRequest) returns (Exercise){
+        option (google.api.http) = {
+            get: "/v1/exercises/{id}"
+        };
+    }
+
+    rpc CreateExercise(CreateExerciseRequest) returns (Exercise){
+        option (google.api.http) = {
+            post: "/v1/exercises"
+            body: "exercise"
+        };
+    }
+    //TODO: Mask id field from body
+    rpc UpdateExercise(UpdateRequest) returns (Exercise){
+        option (google.api.http) = {
+            patch: "/v1/exercises/{id}" 
+            body: "exercise"
+        };
+    }
+    rpc DeleteExercise(DeleteRequest) returns (google.protobuf.Empty){
+        option (google.api.http) = {
+            delete: "/v1/exercises/{id}"
+        };
+    }
+    rpc ListExercises(ListExercisesRequest) returns (ListExercisesResponse){
+        option (google.api.http) = {
+            get: "/v1/exercises"
+        };
+    }
+}
+//Get
+message GetExerciseRequest {
+    string id = 1;
+}
+//Create
+message CreateExerciseRequest {
+    Exercise exercise = 1;
+}
+//Update
+message UpdateRequest{
+    string id = 1;
+    Exercise exercise = 2;
+}
+//Delete
+message DeleteRequest{
+    string id = 1;
+}
+
+//List
+message ListExercisesRequest {
+    // The maximum number of items to return.
+    int32 page_size = 1;
+
+    // The next_page_token value returned from a previous List request, if any.
+    string page_token = 2;
+}
+message ListExercisesResponse {
+    repeated Exercise exercises = 1;
+    // Token to retrieve the next page of results, or empty if there are no
+    // more results in the list.
+    string next_page_token = 2;
+}
