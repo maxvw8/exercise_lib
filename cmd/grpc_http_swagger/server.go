@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -47,7 +48,7 @@ func getKeyPair() tls.Certificate {
 	return cer
 }
 
-func getCertPool(cer tls.Certificate) *x509.CertPool {
+func getCertPool() *x509.CertPool {
 	demoCertPool := x509.NewCertPool()
 	cert, _ := ioutil.ReadFile("certs/server.pem")
 	ok := demoCertPool.AppendCertsFromPEM(cert)
@@ -60,7 +61,7 @@ func main() {
 	srvAddress, port := "localhost", "10000"
 	srvAddress = fmt.Sprintf("%s:%s", srvAddress, port)
 	keypair := getKeyPair()
-	certPool := getCertPool(keypair)
+	certPool := getCertPool()
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync() // flushes buffer, if any
 
@@ -69,12 +70,13 @@ func main() {
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_zap.UnaryServerInterceptor(logger),
 		)),
+		grpc.Creds(credentials.NewClientTLSFromCert(certPool, srvAddress)),
 	}
 	// Create new gRPC server with (blank) options
 	grpcServer := grpc.NewServer(opts...)
-
 	pbexrs.RegisterExerciseServiceServer(grpcServer, newServer())
 	ctx := context.Background()
+
 	dcreds := credentials.NewTLS(&tls.Config{
 		ServerName: srvAddress,
 		RootCAs:    certPool,
@@ -82,6 +84,10 @@ func main() {
 	dopts := []grpc.DialOption{grpc.WithTransportCredentials(dcreds)}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/swagger.json", func(w http.ResponseWriter, req *http.Request) {
+		io.Copy(w, strings.NewReader(pbexrs.Swagger))
+	})
+
 	gwmux := runtime.NewServeMux()
 
 	err := pbexrs.RegisterExerciseServiceHandlerFromEndpoint(ctx, gwmux, srvAddress, dopts)
@@ -89,10 +95,11 @@ func main() {
 		fmt.Printf("serve: %v\n", err)
 		return
 	}
-	mux.Handle("/", gwmux)
 
-	//serve swagger
-	conn, err := net.Listen("tcp", srvAddress)
+	mux.Handle("/", gwmux)
+	//serve swagger ui
+
+	conn, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
 		panic(err)
 	}
@@ -105,8 +112,7 @@ func main() {
 		},
 	}
 	fmt.Printf("grpc on port: %s\n", port)
-	err = srv.Serve(conn)
-
+	err = srv.Serve(tls.NewListener(conn, srv.TLSConfig))
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
